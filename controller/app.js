@@ -10,7 +10,7 @@ const app = express();
 
 const actor = require("../model/actor");
 const customer = require("../model/customer");
-const film_categories = require("../model/film_categories");
+const film_categories = require("../model/films");
 const staff = require("../model/staff");
 
 const jwt = require("jsonwebtoken");
@@ -50,6 +50,27 @@ app.post('/login/', (req, res) => {
               })
           }
       })
+})
+
+app.get('/staff/:staffID', isLoggedInMiddleware, (req, res, next) => {
+    console.log(req.params)
+    staff.getStaffbyID(req.params.staffID, (error, staff) => {
+        const staffID = parseInt(req.params.staffID);
+        if (isNaN(staffID)) {
+            res.status(400).send();
+            return;
+        }
+        if (error) {
+            res.status(500).send();
+            return;
+        } else if (staff === null) {
+            res.status(404).send();
+            return;
+        } else {
+            res.status(200).json(staff);
+            return
+        }
+    })
 })
 
 // Endpoint 1: Get /actors/:actor_id
@@ -149,6 +170,16 @@ app.delete("/actors/:actor_id", (req, res) => {
     })
 })
 
+app.get("/film_categories/", (req, res) => {
+    film_categories.film_categories(function (err, result) {
+        if (!err) {
+            res.status(200).json(result);
+        } else {
+            res.status(500).json({error_msg: "Internal server error"});
+        }
+    })
+})
+
 app.get("/film_categories/:category_id/films", (req, res) => {
     const category_id = parseInt(req.params.category_id);
     film_categories.films_by_category(category_id, function (err, result) {
@@ -159,6 +190,38 @@ app.get("/film_categories/:category_id/films", (req, res) => {
         }
     })
 })
+
+app.get("/films/:film_id", (req, res) => {
+    const film_id = parseInt(req.params.film_id);
+    film_categories.film_by_id(film_id, function (err, result) {
+        if (!err) {
+            res.status(200).json(result);
+        } else if (result === null) {
+            res.sendStatus(404);
+        } else {
+            res.status(500).json({error_msg: "Internal server error"});
+        }
+    })
+})
+
+app.get("/films", (req, res) => {
+    const query = req.query.q;
+    console.log(query);
+    if (!query || query.length < 3) {
+        res.status(400).json({error_msg: "Query must be at least 3 characters long"});
+        return;
+    }
+    const max_rate = parseInt(req.query.mr);
+    film_categories.films_by_title(query, max_rate, function(err, result) {
+        if (!err) {
+            res.status(200).json(result);
+        } else {
+            res.status(500).json({error_msg: "Internal Server Error"})
+        }
+    })
+})
+
+app.get("")
 
 app.get("/customer/:customer_id/payment", (req, res) => {
     const customer_id = parseInt(req.params.customer_id);
