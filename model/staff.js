@@ -29,5 +29,27 @@ module.exports = {
 
       }
     })
+  },
+
+  getStaffbyID: function(staff_id, callback) {
+    var dbConn = db.getConnection();
+    dbConn.connect(function(err) {
+      if (err) {
+        console.log(err);
+        return callback(err, null);
+      } else {
+      const query = "SELECT * FROM staff WHERE staff_id = ?";
+      dbConn.query(query, [staff_id], (error, results) => {
+        if (error) {
+          return callback(error, null);
+        } else if (results.length === 0) {
+          return callback(null, null);
+        } else {
+          const staff = results[0];
+          return callback(null, staff);
+        }
+      })}
+      }
+    )
   }
 }
