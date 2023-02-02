@@ -24,7 +24,7 @@ module.exports = {
                             INNER JOIN film_category fica ON fi.film_id = fica.film_id
                             INNER JOIN category ca on fica.category_id = ca.category_id
                     WHERE
-                        ca.name = ?
+                        fica.category_id = ?
                 `
                 dbConn.query(sql, [category_id], function (err, results) {
                     dbConn.end();

@@ -73,6 +73,7 @@ module.exports = {
             } else {
                 const {store_id, first_name, last_name, email, address} = customer;
                 const {address_line1, address_line2, district, city_id, postal_code, phone} = address;
+                console.log(address)
                 const address_sql = `
                     INSERT INTO address(address, address2, district, city_id, postal_code, phone)
                     VALUES (?, ?, ?, ?, ?, ?)`
@@ -97,6 +98,23 @@ module.exports = {
                     }
                 })
 
+            }
+        })
+    },
+
+    get_city_via_name: function (city_name, callback) {
+        var dbConn = db.getConnection();
+        dbConn.connect(function (err) {
+            if (err) {
+                console.log(err);
+                return callback(err, null);
+            } else {
+                // lower city_name and strip it of whitespace
+                city_name = city_name.toLowerCase().trim();
+                const sql = `
+                SELECT * FROM city WHERE LOWER(city) = ? 
+                `
+                dbConn.query(cust_sql, )
             }
         })
     }

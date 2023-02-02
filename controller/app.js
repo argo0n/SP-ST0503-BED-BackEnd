@@ -12,6 +12,7 @@ const actor = require("../model/actor");
 const customer = require("../model/customer");
 const film_categories = require("../model/films");
 const staff = require("../model/staff");
+const others = require("../model/others");
 
 const jwt = require("jsonwebtoken");
 const JWT_SECRET  = require("../config.js");
@@ -67,6 +68,7 @@ app.get('/staff/:staffID', isLoggedInMiddleware, (req, res, next) => {
             res.status(404).send();
             return;
         } else {
+            console.log(staff)
             res.status(200).json(staff);
             return
         }
@@ -118,7 +120,7 @@ app.get("/actors", (req, res) => {
     })
 })
 
-app.post("/actors", (req, res) => {
+app.post("/actors", isLoggedInMiddleware, (req, res, next) => {
     const first_name = req.body.first_name;
     const last_name = req.body.last_name;
     if (first_name == null || last_name == null) {
@@ -134,7 +136,7 @@ app.post("/actors", (req, res) => {
     }
 })
 
-app.put("/actors/:actor_id", (req, res) => {
+app.put("/actors/:actor_id", isLoggedInMiddleware, (req, res, next) => {
     const actor_id = parseInt(req.params.actor_id);
     const first_name = req.body.first_name;
     const last_name = req.body.last_name;
@@ -155,7 +157,7 @@ app.put("/actors/:actor_id", (req, res) => {
     }
 })
 
-app.delete("/actors/:actor_id", (req, res) => {
+app.delete("/actors/:actor_id", isLoggedInMiddleware, (req, res, next) => {
     const actor_id = parseInt(req.params.actor_id);
     actor.delete(actor_id, function (err, result) {
         if (!err) {
@@ -221,8 +223,6 @@ app.get("/films", (req, res) => {
     })
 })
 
-app.get("")
-
 app.get("/customer/:customer_id/payment", (req, res) => {
     const customer_id = parseInt(req.params.customer_id);
     customer.get_customer_payments(customer_id, req.query.start_date, req.query.end_date, function(err, result) {
@@ -234,7 +234,28 @@ app.get("/customer/:customer_id/payment", (req, res) => {
     })
 })
 
-app.post("/customers", (req, res) => {
+app.get("/stores", (req, res) => {
+    staff.getStores(function (err, result) {
+        if (!err) {
+            res.status(200).json(result);
+        } else {
+            res.status(500).json({error_msg: "Internal server error"});
+        }
+    })
+})
+
+app.get("/cities", (req, res) => {
+    others.getCities(function (err, result) {
+        if (!err) {
+            res.status(200).json(result);
+        } else {
+            res.status(500).json({error_msg: "Internal server error"});
+        }
+    })
+})
+
+app.post("/customers", isLoggedInMiddleware, (req, res, next) => {
+    console.log("??")
     if (req.body.store_id == null || req.body.first_name == null ||
         req.body.last_name == null || req.body.email == null ||
         req.body.address.address_line1 == null || req.body.address.address_line2 == null ||
