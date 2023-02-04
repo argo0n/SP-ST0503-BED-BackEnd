@@ -18,17 +18,37 @@ module.exports = {
             } else {
                 const sql = `
                     SELECT
-                        fi.film_id, fi.title, ca.name, fi.rating, fi.release_year, fi.length as duration
-                    FROM
-                        film fi
-                            INNER JOIN film_category fica ON fi.film_id = fica.film_id
-                            INNER JOIN category ca on fica.category_id = ca.category_id
-                    WHERE
+                        fi.film_id, fi.title, ca.name as category, fi.description, fi.release_year, la.name as language, fi.length, fi.rating, fi.special_features, fi.rental_rate
+                    FROM film fi
+                         INNER JOIN film_category fica on fi.film_id = fica.film_id
+                         INNER JOIN category ca on fica.category_id = ca.category_id
+                         INNER JOIN language la on fi.language_id = la.language_id
+                    WHERE 
                         fica.category_id = ?
                 `
                 dbConn.query(sql, [category_id], function (err, results) {
                     dbConn.end();
                     console.log(results)
+                    if (err) {
+                        return callback(err, null);
+                    } else {
+                        return callback(null, results);
+                    }
+                })
+            }
+        })
+    },
+
+    get_languages: function(callback) {
+        var dbConn = db.getConnection();
+        dbConn.connect(function (err) {
+            if (err) {
+                console.log(err);
+                return callback(err, null);
+            } else {
+                let sql = `SELECT language_id, name FROM language`
+                dbConn.query(sql, function(err, results) {
+                    dbConn.end();
                     if (err) {
                         return callback(err, null);
                     } else {
@@ -58,11 +78,7 @@ module.exports = {
                 if (!isNaN(max_price) && max_price > 0) {
                     sql += " AND fi.rental_rate < ?"
                 }
-                console.log(sql)
-                console.log(title)
-                // title = JSON.parse(title); // Included this to remove quotes
                 let param = `%${title}%`
-                console.log(param)
                 dbConn.query(sql, [param, max_price], function(err, results) {
                     dbConn.end();
                     if (err) {

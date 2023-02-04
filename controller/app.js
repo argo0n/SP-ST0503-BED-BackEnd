@@ -238,6 +238,16 @@ app.get("/films", (req, res) => {
     })
 })
 
+app.get("/languages", (req, res) => {
+    film_categories.get_languages(function (err, result) {
+        if (!err) {
+            res.status(200).json(result);
+        } else {
+            res.status(500).json({error_msg: "Internal server error"});
+        }
+    })
+})
+
 /*
 
 CUSTOMERS, STORES, CITIES ENDPOINTS
