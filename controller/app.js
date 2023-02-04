@@ -59,30 +59,32 @@ app.get('/staff/:staffID', isLoggedInMiddleware, (req, res, next) => {
         const staffID = parseInt(req.params.staffID);
         if (isNaN(staffID)) {
             res.status(400).send();
-            return;
         }
         if (error) {
             res.status(500).send();
-            return;
         } else if (staff === null) {
             res.status(404).send();
-            return;
         } else {
             console.log(staff)
             res.status(200).json(staff);
-            return
         }
     })
 })
 
-// Endpoint 1: Get /actors/:actor_id
+/*
+
+ACTOR ENDPOINTS
+
+ */
+
+
+// Endpoint to get a SINGLE actor BY Actor ID
 app.get("/actors/:actorID/", (req, res, next) => {
     // noinspection JSUnresolvedVariable
     const actorID = parseInt(req.params.actorID);
     // if actorID is not a number, send a 400
     if (isNaN(actorID)) {
         res.status(400).send();
-        return;
     } else {
         actor.findByID(actorID, (err, actor) => {
             if (err) {
@@ -101,7 +103,7 @@ app.get("/actors/:actorID/", (req, res, next) => {
 })
 
 
-// Endpoint 2: GET /actors
+// Endpoint to get MULTIPLE actors without any constraint
 app.get("/actors", (req, res) => {
     let limit = parseInt(req.query.limit);
     let offset = parseInt(req.query.offset);
@@ -120,6 +122,7 @@ app.get("/actors", (req, res) => {
     })
 })
 
+// Endpoint to CREATE a new actor
 app.post("/actors", isLoggedInMiddleware, (req, res, next) => {
     const first_name = req.body.first_name;
     const last_name = req.body.last_name;
@@ -136,6 +139,7 @@ app.post("/actors", isLoggedInMiddleware, (req, res, next) => {
     }
 })
 
+// Endpoint to UPDATE a new actor
 app.put("/actors/:actor_id", isLoggedInMiddleware, (req, res, next) => {
     const actor_id = parseInt(req.params.actor_id);
     const first_name = req.body.first_name;
@@ -145,7 +149,7 @@ app.put("/actors/:actor_id", isLoggedInMiddleware, (req, res, next) => {
     } else {
         actor.update(actor_id, first_name, last_name, function (err, result) {
             if (!err) {
-                if (result == 0) {
+                if (result === 0) {
                     res.sendStatus(204);
                 } else {
                     res.status(200).json({success_msg: "record updated"})
@@ -157,6 +161,7 @@ app.put("/actors/:actor_id", isLoggedInMiddleware, (req, res, next) => {
     }
 })
 
+// Endpoint to DELETE an actor
 app.delete("/actors/:actor_id", isLoggedInMiddleware, (req, res, next) => {
     const actor_id = parseInt(req.params.actor_id);
     actor.delete(actor_id, function (err, result) {
@@ -172,6 +177,13 @@ app.delete("/actors/:actor_id", isLoggedInMiddleware, (req, res, next) => {
     })
 })
 
+/*
+
+FILM AND FILM CATEGORIES ENDPOINTS
+
+ */
+
+// Endpoint to GET MULTIPLE film categories without any constraint
 app.get("/film_categories/", (req, res) => {
     film_categories.film_categories(function (err, result) {
         if (!err) {
@@ -182,6 +194,7 @@ app.get("/film_categories/", (req, res) => {
     })
 })
 
+// Endpoint to GET MULTIPLE films with a category ID
 app.get("/film_categories/:category_id/films", (req, res) => {
     const category_id = parseInt(req.params.category_id);
     film_categories.films_by_category(category_id, function (err, result) {
@@ -193,6 +206,7 @@ app.get("/film_categories/:category_id/films", (req, res) => {
     })
 })
 
+// Endpoint to GET a SINGLE film with a film ID
 app.get("/films/:film_id", (req, res) => {
     const film_id = parseInt(req.params.film_id);
     film_categories.film_by_id(film_id, function (err, result) {
@@ -206,6 +220,7 @@ app.get("/films/:film_id", (req, res) => {
     })
 })
 
+// Endpoint to GET MULTIPLE films with a search query
 app.get("/films", (req, res) => {
     const query = req.query.q;
     console.log(query);
@@ -213,7 +228,7 @@ app.get("/films", (req, res) => {
         res.status(400).json({error_msg: "Query must be at least 3 characters long"});
         return;
     }
-    const max_rate = parseInt(req.query.mr);
+    const max_rate = parseFloat(req.query.mr);
     film_categories.films_by_title(query, max_rate, function(err, result) {
         if (!err) {
             res.status(200).json(result);
@@ -223,6 +238,38 @@ app.get("/films", (req, res) => {
     })
 })
 
+/*
+
+CUSTOMERS, STORES, CITIES ENDPOINTS
+
+ */
+
+// Endpoint to CREATE a NEW customer
+app.post("/customers", isLoggedInMiddleware, (req, res, next) => {
+    console.log("??")
+    if (req.body.store_id == null || req.body.first_name == null ||
+      req.body.last_name == null || req.body.email == null ||
+      req.body.address.address_line1 == null || req.body.address.address_line2 == null ||
+      req.body.address.district == null || req.body.address.city_id == null ||
+      req.body.address.postal_code == null || req.body.address.phone == null
+    ) {
+        res.status(400).json({error_msg: "missing data"});
+    } else {
+        customer.create_customer(req.body, function(err, result) {
+            if (!err) {
+                if (result === 0) {
+                    res.status(409).json({error_msg: "email already exist"});
+                } else {
+                    res.status(201).json({customer_id: result});
+                }
+            } else {
+                res.status(500).json({error_msg: "Internal server error"});
+            }
+        })
+    }
+})
+
+// Endpoint to GET MULTIPLE payments of a customer
 app.get("/customer/:customer_id/payment", (req, res) => {
     const customer_id = parseInt(req.params.customer_id);
     customer.get_customer_payments(customer_id, req.query.start_date, req.query.end_date, function(err, result) {
@@ -234,6 +281,7 @@ app.get("/customer/:customer_id/payment", (req, res) => {
     })
 })
 
+// Endpoint to GET MULTIPLE stores without any constraint
 app.get("/stores", (req, res) => {
     staff.getStores(function (err, result) {
         if (!err) {
@@ -244,6 +292,8 @@ app.get("/stores", (req, res) => {
     })
 })
 
+
+// Endpoint to GET MULTIPLE cities without any constraint
 app.get("/cities", (req, res) => {
     others.getCities(function (err, result) {
         if (!err) {
@@ -254,28 +304,6 @@ app.get("/cities", (req, res) => {
     })
 })
 
-app.post("/customers", isLoggedInMiddleware, (req, res, next) => {
-    console.log("??")
-    if (req.body.store_id == null || req.body.first_name == null ||
-        req.body.last_name == null || req.body.email == null ||
-        req.body.address.address_line1 == null || req.body.address.address_line2 == null ||
-        req.body.address.district == null || req.body.address.city_id == null ||
-        req.body.address.postal_code == null || req.body.address.phone == null
-    ) {
-        res.status(400).json({error_msg: "missing data"});
-    } else {
-        customer.create_customer(req.body, function(err, result) {
-            if (!err) {
-                if (result == 0) {
-                    res.status(409).json({error_msg: "email already exist"});
-                } else {
-                    res.status(201).json({customer_id: result});
-                }
-            } else {
-                res.status(500).json({error_msg: "Internal server error"});
-            }
-        })
-    }
-})
+
 
 module.exports = app;
