@@ -19,12 +19,16 @@ const JWT_SECRET  = require("../config.js");
 const isLoggedInMiddleware = require("../auth/isLoggedInMiddleware");
 
 var cors = require("cors");
+const bodyParser = require("body-parser");
 
 app.options('*', cors());
 app.use(cors());
 
-app.use(express.json());
-app.use(express.urlencoded({extended: false}));
+//app.use(express.json());
+//app.use(express.urlencoded({extended: false}));
+
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 app.post('/login/', (req, res) => {
     staff.loginStaff(
@@ -182,6 +186,33 @@ app.delete("/actors/:actor_id", isLoggedInMiddleware, (req, res, next) => {
 FILM AND FILM CATEGORIES ENDPOINTS
 
  */
+
+// Endpoint to CREATE a NEW film
+app.post("/films", isLoggedInMiddleware, (req, res, next) => {
+    if (req.body.title == null || req.body.description == null || req.body.release_year == null || req.body.language_id == null || req.body.length == null || req.body.rating == null || req.body.image == null) {
+        let missingFields = [];
+        let fields = ['title', 'description', 'release_year', 'language_id', 'length', 'rating', 'special_features', 'image'];
+        for (let field of fields) {
+            if (!req.body[field]) {
+                missingFields.push(field);
+            }
+        }
+        res.status(400).json({error_msg: `missing fields: ${missingFields.join(', ')}`});
+    }
+    const base64 = req.body.image;
+    const [header, encodedData] = base64.split(',');
+    const mimeType = header.split(':')[1].split(';')[0];
+    if (mimeType !== "image/jpeg" && mimeType !== "image/png" && mimeType !== "image/jpg" && mimeType !== "image/gif") {
+        res.status(400).json({error_msg: "invalid image format (must be one of JPG or PNG.)"});
+    }
+    film_categories.createFilm(req.body, function (err, result) {
+        if (!err) {
+            res.status(201).json({film_id: result});
+        } else {
+            res.status(500).json({error_msg: "Internal server error"});
+        }
+    })
+})
 
 // Endpoint to GET MULTIPLE film categories without any constraint
 app.get("/film_categories/", (req, res) => {

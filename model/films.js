@@ -9,6 +9,50 @@ const db = require("./databaseConfig");
 
 
 module.exports = {
+
+    createFilm: function(film, callback) {
+        var dbConn = db.getConnection();
+        const { title, description, release_year, language_id, category_id, length, rating, actors, image } = film;
+        dbConn.connect(function(err) {
+            if (err) {
+                console.log(err);
+                return callback(err, null);
+            } else {
+                const sql = `
+                    INSERT INTO film (title, description, release_year, language_id, length, rating, image) VALUES (?, ?, ?, ?, ?, ?, ?)
+                `
+                dbConn.query(sql, [title, description, release_year, language_id, length, rating, image], function(err, results) {
+                    if (err) {
+                        console.log(err);
+                        return callback(err, null);
+                    } else {
+                        const insertID = results.insertId;
+                        const actors_sql = "INSERT INTO film_actor(actor_id, film_id) VALUES (?, ?)"
+                        for (let i = 0; i < actors.length; i++) {
+                            dbConn.query(actors_sql, [actors[i], insertID], function(err, results) {
+                                if (err) {
+                                    console.log(err);
+                                    return callback(err, null);
+                                }
+                            })
+                        }
+                        var film_category_sql = `INSERT into film_category (film_id, category_id) VALUES (?, ?)`
+                        dbConn.query(film_category_sql, [insertID, category_id], function(err, results) {
+                            if (err) {
+                                console.log(err);
+                                return callback(err, null);
+                            } else {
+                                dbConn.end();
+                                return callback(null, insertID);
+                            }
+                        })
+                    }
+                })
+            }
+        })
+    },
+
+
     films_by_category: function (category_id, callback) {
         var dbConn = db.getConnection();
         dbConn.connect(function (err) {
@@ -68,12 +112,14 @@ module.exports = {
             } else {
                 let sql = `
                 SELECT 
-                fi.film_id, fi.title, ca.name as category, fi.description, fi.release_year, la.name as language, fi.length, fi.rating, fi.special_features, fi.rental_rate
-                FROM film fi
+                    fi.film_id, fi.title, ca.name as category, fi.description, fi.release_year, la.name as language, fi.length, fi.rating, fi.special_features, fi.rental_rate
+                FROM 
+                    film fi
                 INNER JOIN film_category fica on fi.film_id = fica.film_id
                 INNER JOIN category ca on fica.category_id = ca.category_id
                 INNER JOIN language la on fi.language_id = la.language_id
-                WHERE fi.title like ?
+                WHERE 
+                    fi.title like ?
                 `
                 if (!isNaN(max_price) && max_price > 0) {
                     sql += " AND fi.rental_rate < ?"
@@ -101,18 +147,20 @@ module.exports = {
             } else {
                 const sql = `
                 SELECT 
-                fi.film_id, fi.title, ca.name as category, fi.description, fi.release_year, la.name as language, fi.length, fi.rating, fi.special_features, fi.rental_rate
+                fi.film_id, fi.title, ca.name as category, fi.description, fi.release_year, la.name as language, fi.length, fi.rating, fi.special_features, fi.rental_rate, fi.image
                 FROM film fi
                 INNER JOIN film_category fica on fi.film_id = fica.film_id
                 INNER JOIN category ca on fica.category_id = ca.category_id
                 INNER JOIN language la on fi.language_id = la.language_id
                 WHERE fi.film_id = ?
                 `
+
                 dbConn.query(sql, [id], function(err, results) {
                     if (err) {
                         dbConn.end();
                         return callback(err, null);
                     } else {
+                        console.log(results[0].image, typeof(results[0].image))
                         if (results.length === 0) {
                             dbConn.end();
                             return callback(null, null);
