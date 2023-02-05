@@ -1,3 +1,10 @@
+/*
+Name        LAI YE QI
+Class       DIT/FT/1B/05
+Group       ??
+Admn        P2222189
+ */
+
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = require("../config.js");
 
